@@ -1,12 +1,14 @@
 package rasterdata;
 
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.util.Optional;
 import java.util.function.Function;
 
 import annotations.NotNull;
 
-public class RasterImageBuf<PixelType> implements RasterImage<PixelType>{
+public class RasterImageBuf<PixelType> implements RasterImage<PixelType>, 
+		Presentable<Graphics> {
 	private final @NotNull BufferedImage img;
 	private final @NotNull Function<Integer, PixelType> toPixelType;
 	private final @NotNull Function<PixelType, Integer> fromPixelType;
@@ -43,6 +45,12 @@ public class RasterImageBuf<PixelType> implements RasterImage<PixelType>{
 	@Override
 	public int getWidth() {
 		return img.getWidth();
+	}
+
+	@Override
+	public @NotNull Graphics present(final @NotNull Graphics device) {
+		device.drawImage(img, 0, 0, null);
+		return device;
 	}
 
 }
