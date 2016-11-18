@@ -17,9 +17,9 @@ public class PolygonRasterizerImpl<PixelType> implements PolygonRasterizer<Pixel
 		RasterImage<PixelType> result = img;
 		for (int i = 0; i < vertices.size(); i++) {
 			final double startX = vertices.get(i).getX();
-			final double startY = vertices.get(i).getX();
-			final double endX = vertices.get(i % vertices.size()).getX();
-			final double endY = vertices.get(i % vertices.size()).getY();
+			final double startY = vertices.get(i).getY();
+			final double endX = vertices.get((i + 1) % vertices.size()).getX();
+			final double endY = vertices.get((i + 1) % vertices.size()).getY();
 			result = liner.drawLine(result, startX, startY, endX, endY, pixel);
 		}
 		return result;
