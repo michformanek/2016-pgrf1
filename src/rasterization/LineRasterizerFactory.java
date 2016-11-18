@@ -16,6 +16,8 @@ public class LineRasterizerFactory<PixelType> {
 			return new LineRasterizerTrivial<>();
 		else if (type == LineRasterizerType.DDA)
 			return new LineRasterizerDDA<>();
+		else if (type == LineRasterizerType.BRESENHAM)
+			return new LineRasterizerBresenham<>();
 		else
 			return new LineRasterizerDDA<>();
 	}
