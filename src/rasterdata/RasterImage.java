@@ -55,4 +55,13 @@ public interface RasterImage<PixelType> {
 	 * @return number of columns
 	 */
 	int getWidth();
+
+	/**
+	 * Returns a RasterImage filled with pixels of given value
+	 *
+	 * @param pixel value to be set to the each pixel of RasterImage, must not be null
+	 * @return RasterImage filled with given pixel
+	 */
+	@NotNull
+	RasterImage<PixelType> fill(@NotNull PixelType pixel);
 }
