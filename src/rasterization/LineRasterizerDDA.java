@@ -16,17 +16,17 @@ public class LineRasterizerDDA<PixelType> implements LineRasterizer<PixelType> {
 		final double c2 = (img.getWidth() - 1) * 0.5 * (x2 + 1);
 		final double r2 = (img.getHeight() - 1) * 0.5 * (1 - y2);
 
-		final double pixelCount = Math.max(Math.abs(c2 - c1), Math.abs(r2 - r1)) + 1;
+		int pixelCount = (int) (Math.max(Math.abs(c2 - c1), Math.abs(r2 - r1)) + 1);
 		double dx, dy;
 		if (Math.abs(c2 - c1) > Math.abs(r2 - r1)) {
 			dx = Math.signum(c2 - c1);
-			dy = dx * (float) (r2 - r1) / (c2 - c1);
+			dy = dx * (r2 - r1) / (c2 - c1);
 
 		} else {
 			dy = Math.signum(r2 - r1);
-			dx = dy * (float) (c2 - c1) / (r2 - r1);
+			dx = dy * (c2 - c1) / (r2 - r1);
 		}
-		double x = r1, y = c1;
+		double x = c1, y = r1;
 		for (int i = 0; i < pixelCount; i++) {
 			result = result.withPixel((int) x, (int) y, pixel);
 			x += dx;
