@@ -11,7 +11,10 @@ import util.Tool;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,8 +45,10 @@ public class Canvas {
 	PolygonRasterizer<Integer> polygonRasterizer;
 	private final
 	@NotNull
+	CircleRasterizer<Integer> circleRasterizer;
+	private final
+	@NotNull
 	List<Point> selectedPoints;
-	private final Color btnColor;
 	private
 	@NotNull
 	LineRasterizer<Integer> liner;
@@ -65,28 +70,28 @@ public class Canvas {
 		imagePresenter = tempImage;
 
 		linerFactory = new LineRasterizerFactory<>();
-		liner = linerFactory.getLineRasterizer(LineRasterizerType.TRIVIAL);
+		liner = linerFactory.getLineRasterizer(LineRasterizerType.DDA);
 		polygonRasterizer = new PolygonRasterizerImpl<>();
+		circleRasterizer = new CircleRasterizerImpl<>();
 		selectedTool = Tool.LINE;
 
 		selectedPoints = new ArrayList<>();
 		color = new Color(0x08A0AB);
-		btnColor = new Color(0x2ecc71);
-
 		panel = new JPanel();
 		panel.setPreferredSize(new Dimension(width, height));
 
 		panel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(final MouseEvent e) {
+				selectedPoints.add(PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
 				if (selectedTool == Tool.LINE) {
-					if (selectedPoints.size() == 0) {
-						selectedPoints.add(PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
+					if (selectedPoints.size() == 1) {
 						selectedPoints.add(PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
 					} else {
 						selectedPoints.set(1, PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
 					}
-				} else if (selectedTool == Tool.POLYGON) {
+				}
+				if (selectedTool == Tool.CIRCLE && selectedPoints.size() == 1) {
 					selectedPoints.add(PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
 				}
 				draw();
@@ -109,6 +114,20 @@ public class Canvas {
 				}
 				draw();
 				present();
+			}
+
+			@Override
+			public void mouseMoved(final MouseEvent e) {
+				final Point point = PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height);
+				if (selectedTool == Tool.CIRCLE) {
+					if (selectedPoints.size() < 4 && selectedPoints.size() > 1) {
+						selectedPoints.set(selectedPoints.size() - 1, point);
+						draw();
+						present();
+					} else {
+						selectedPoints.clear();
+					}
+				}
 			}
 		});
 
@@ -146,7 +165,12 @@ public class Canvas {
 		if (selectedTool == Tool.LINE && selectedPoints.size() > 1) {
 			img = liner.drawLine(img, selectedPoints.get(0).getX(), selectedPoints.get(0).getY(), selectedPoints.get(1).getX(), selectedPoints.get(1).getY(), color.getRGB());
 		} else if (selectedTool == Tool.CIRCLE) {
-			// TODO img = kruzitko.kruh
+			if (selectedPoints.size() == 2) {
+				img = circleRasterizer.drawCircle(img, selectedPoints.get(0), selectedPoints.get(1), selectedPoints.get(1), color.getRGB());
+			}
+			if (selectedPoints.size() == 3) {
+				img = circleRasterizer.drawCircle(img, selectedPoints.get(0), selectedPoints.get(1), selectedPoints.get(2), color.getRGB());
+			}
 		} else if (selectedTool == Tool.POLYGON && selectedPoints.size() > 1) {
 			img = polygonRasterizer.drawPolygon(img, selectedPoints, liner, color.getRGB());
 		}
@@ -158,8 +182,8 @@ public class Canvas {
 	}
 
 	private JPanel createSidebar() {
-		JPanel sidebar = new JPanel();
-		List<SidebarButton> buttons = new ArrayList<>();
+		final JPanel sidebar = new JPanel();
+		final List<SidebarButton> buttons = new ArrayList<>();
 		sidebar.setLayout(new GridLayout(0, 1));
 
 		final List<ActionListener> toolListeners = new ArrayList<>();
@@ -186,10 +210,12 @@ public class Canvas {
 		toolListeners.add(e -> {
 			final SidebarButton clickedBtn = (SidebarButton) e.getSource();
 			selectedTool = clickedBtn.getTool();
+			selectedPoints.clear();
 			buttons.forEach(btn -> {
-				if (btn.getTool() == selectedTool && !btn.isInverse()) {
+				if (btn.isInverse()) {
 					btn.toggle();
-				} else if (btn.getTool() != selectedTool && btn.isInverse()) {
+				}
+				if (btn.getTool() == selectedTool) {
 					btn.toggle();
 				}
 			});
@@ -201,10 +227,12 @@ public class Canvas {
 
 
 		JComboBox<LineRasterizerType> comboBox = new JComboBox<>(LineRasterizerType.values());
-		comboBox.setSelectedItem(LineRasterizerType.TRIVIAL);
+		comboBox.setSelectedItem(LineRasterizerType.DDA);
 		comboBox.addActionListener(e -> liner = linerFactory.getLineRasterizer((LineRasterizerType) comboBox.getSelectedItem()));
-		comboBox.setBackground(new Color(0x95a5a6));
-		comboBox.setForeground(new Color(0x2c3e50));
+		comboBox.setBackground(new Color(0x34495e));
+		comboBox.setForeground(new Color(0x2ecc71));
+		comboBox.setFocusable(false);
+		((JLabel) comboBox.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
 		comboBox.setToolTipText("Pick your line algorithm");
 
 		buttons.forEach(btn -> {
