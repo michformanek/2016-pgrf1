@@ -10,7 +10,7 @@ import util.PointConverter;
  */
 public class CircleRasterizerImpl<PixelType> implements CircleRasterizer<PixelType> {
 	@Override
-	public RasterImage<PixelType> drawCircle(@NotNull RasterImage<PixelType> img, @NotNull Point center, @NotNull Point arcStart, @NotNull Point arcEnd, @NotNull PixelType pixel) {
+	public RasterImage<PixelType> drawCircle(@NotNull RasterImage<PixelType> img, @NotNull Point center, @NotNull Point arcStart, @NotNull Point arcEnd, @NotNull final LineRasterizer<PixelType> liner, @NotNull PixelType pixel) {
 		RasterImage<PixelType> result = img;
 
 		final Point c = PointConverter.convertFromNDC(center, img.getWidth(), img.getHeight());
@@ -42,13 +42,5 @@ public class CircleRasterizerImpl<PixelType> implements CircleRasterizer<PixelTy
 			}
 		}
 		return result;
-	}
-
-	private double calculateAngle(int beginX, int beginY, int endX, int endY) {
-		double angle = Math.toDegrees(Math.atan2(endY - beginY, endX - beginX));
-		if (angle < 0) {
-			angle += 360;
-		}
-		return angle;
 	}
 }

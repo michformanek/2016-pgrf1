@@ -3,8 +3,6 @@ package rasterization;
 import annotations.NotNull;
 import rasterdata.RasterImage;
 
-import java.util.List;
-
 /**
  * Created by Michal Formanek on 17.11.16.
  */
@@ -19,5 +17,5 @@ public interface CircleRasterizer<PixelType> {
 	 * @return raster image with the line rasterized over the contents of the given image, never null
 	 */
 	@NotNull
-	RasterImage<PixelType> drawCircle(@NotNull RasterImage<PixelType> img, @NotNull Point center, @NotNull Point arcStart, @NotNull Point arcEnd, @NotNull PixelType pixel);
+	RasterImage<PixelType> drawCircle(@NotNull RasterImage<PixelType> img, @NotNull Point center, @NotNull Point arcStart, @NotNull Point arcEnd, @NotNull final LineRasterizer<PixelType> liner, @NotNull PixelType pixel);
 }
