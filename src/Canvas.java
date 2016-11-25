@@ -172,16 +172,11 @@ public class Canvas {
 	public void draw() {
 		clear(0x2f2f2f);
 		if (selectedTool == Tool.LINE && selectedPoints.size() == 2) {
-			img = liner.drawLine(img, selectedPoints.get(0).getX(), selectedPoints.get(0).getY(), selectedPoints.get(1).getX(), selectedPoints.get(1).getY(), color.getRGB());
-		} else if (selectedTool == Tool.POLYGON && selectedPoints.size() > 1) {
+			img = liner.drawLine(img, selectedPoints.get(0).getX(), selectedPoints.get(0).getY(), selectedPoints.get(selectedPoints.size() - 1).getX(), selectedPoints.get(selectedPoints.size() - 1).getY(), color.getRGB());
+		} else if (selectedTool == Tool.POLYGON) {
 			img = polygonRasterizer.drawPolygon(img, selectedPoints, liner, color.getRGB());
 		} else if (selectedTool == Tool.CIRCLE) {
-			if (selectedPoints.size() == 2) {
-				img = circleRasterizer.drawCircle(img, selectedPoints.get(0), selectedPoints.get(1), selectedPoints.get(1), liner, color.getRGB());
-			}
-			if (selectedPoints.size() == 3) {
-				img = circleRasterizer.drawCircle(img, selectedPoints.get(0), selectedPoints.get(1), selectedPoints.get(2), liner, color.getRGB());
-			}
+			img = circleRasterizer.drawCircle(img, selectedPoints.get(0), selectedPoints.get(1), selectedPoints.get(selectedPoints.size() - 1), liner, color.getRGB());
 		}
 	}
 
