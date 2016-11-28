@@ -40,7 +40,7 @@ public class Canvas {
 	Presentable<Graphics> imagePresenter;
 	private final
 	@NotNull
-	LineRasterizerFactory<Integer> linerFactory;
+	LineRasterizerInstantiator<Integer> linerInstantiator;
 	private final
 	@NotNull
 	PolygonRasterizer<Integer> polygonRasterizer;
@@ -73,8 +73,8 @@ public class Canvas {
 		img = tempImage;
 		imagePresenter = tempImage;
 
-		linerFactory = new LineRasterizerFactory<>();
-		liner = linerFactory.getLineRasterizer(LineRasterizerType.DDA);
+		linerInstantiator = new LineRasterizerInstantiator<>();
+		liner = linerInstantiator.getLineRasterizer(LineRasterizerType.DDA);
 		polygonRasterizer = new PolygonRasterizerImpl<>();
 		circleRasterizer = new CircleSegmentRasterizer<>();
 		selectedTool = Tool.LINE;
@@ -232,7 +232,7 @@ public class Canvas {
 
 		JComboBox<LineRasterizerType> comboBox = new JComboBox<>(LineRasterizerType.values());
 		comboBox.setSelectedItem(LineRasterizerType.DDA);
-		comboBox.addActionListener(e -> liner = linerFactory.getLineRasterizer((LineRasterizerType) comboBox.getSelectedItem()));
+		comboBox.addActionListener(e -> liner = linerInstantiator.getLineRasterizer((LineRasterizerType) comboBox.getSelectedItem()));
 		comboBox.setBackground(GuiColor.MIDNIGHT_BLUE);
 		comboBox.setForeground(GuiColor.NEPHRITIS);
 		comboBox.setFocusable(false);

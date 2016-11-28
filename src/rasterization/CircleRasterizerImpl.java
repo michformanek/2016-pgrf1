@@ -10,12 +10,11 @@ import util.PointConverter;
  */
 public class CircleRasterizerImpl<PixelType> implements CircleRasterizer<PixelType> {
 	@Override
-	public RasterImage<PixelType> drawCircle(@NotNull RasterImage<PixelType> img, @NotNull Point center, @NotNull Point arcStart, @NotNull Point arcEnd, @NotNull final LineRasterizer<PixelType> liner, @NotNull PixelType pixel) {
+	public RasterImage<PixelType> drawCircle(@NotNull RasterImage<PixelType> img, @NotNull Point center, @NotNull Point arcStart, @Nullable Point arcEnd, @NotNull final LineRasterizer<PixelType> liner, @NotNull PixelType pixel) {
 		RasterImage<PixelType> result = img;
 
 		final Point c = PointConverter.convertFromNDC(center, img.getWidth(), img.getHeight());
 		final Point s = PointConverter.convertFromNDC(arcStart, img.getWidth(), img.getHeight());
-		final Point e = (arcEnd == null) ? s : PointConverter.convertFromNDC(arcEnd, img.getWidth(), img.getHeight());
 
 		final int radius = (int) Math.abs(Math.sqrt((Math.pow((s.getX() - c.getX()), 2)) + (Math.pow((s.getY() - c.getY()), 2))));
 		final int x0 = (int) c.getX();
