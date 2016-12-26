@@ -1,7 +1,7 @@
 package util;
 
 import annotations.NotNull;
-import rasterization.Point;
+import geometry.Point;
 
 /**
  * Created by Michal Formanek on 18.11.16.

@@ -5,10 +5,15 @@ import gui.SidebarButton;
 import rasterdata.Presentable;
 import rasterdata.RasterImage;
 import rasterdata.RasterImageBuf;
+import rasterfillops.FillerType;
+import rasterfillops.scanline.ScanLine;
+import rasterfillops.scanline.ScanLiner;
+import rasterfillops.seedfill.SeedFill;
+import rasterfillops.seedfill.SeedFill4;
+import rasterfillops.patterns.*;
 import rasterization.*;
-import rasterization.Point;
-import util.PointConverter;
-import util.Tool;
+import geometry.Point;
+import util.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,16 +36,19 @@ public class Canvas {
 
 	private final
 	@NotNull
-	JFrame frame;
-	private final
-	@NotNull
 	JPanel panel;
 	private final
 	@NotNull
 	Presentable<Graphics> imagePresenter;
 	private final
 	@NotNull
-	LineRasterizerInstantiator<Integer> linerInstantiator;
+	LineRasterizerFactory<Integer> linerFactory;
+	private final
+	@NotNull
+	PatternFactory patternFactory;
+	private final
+	@NotNull
+	FillerFactory<Integer> fillerFactory = new FillerFactory();
 	private final
 	@NotNull
 	PolygonRasterizer<Integer> polygonRasterizer;
@@ -50,9 +58,15 @@ public class Canvas {
 	private final
 	@NotNull
 	List<Point> selectedPoints;
+	private final
+	@NotNull
+	ScanLine<Integer> scanLine;
 	private
 	@NotNull
 	LineRasterizer<Integer> liner;
+	private
+	@NotNull
+	SeedFill<Integer> filler;
 	private
 	@NotNull
 	RasterImage<Integer> img;
@@ -62,9 +76,15 @@ public class Canvas {
 	private
 	@NotNull
 	Tool selectedTool;
+	private
+	@NotNull
+	Pattern pattern;
+	private
+	@NotNull
+	FillerType selectedFiller;
 
 	public Canvas(final int width, final int height) {
-		frame = new JFrame();
+		JFrame frame = new JFrame();
 		frame.setTitle("UHK FIM PGRF : Canvas");
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.setResizable(false);
@@ -73,8 +93,11 @@ public class Canvas {
 		img = tempImage;
 		imagePresenter = tempImage;
 
-		linerInstantiator = new LineRasterizerInstantiator<>();
-		liner = linerInstantiator.getLineRasterizer(LineRasterizerType.DDA);
+		linerFactory = new LineRasterizerFactory<>();
+		patternFactory = new PatternFactory();
+		liner = linerFactory.getLineRasterizer(LineRasterizerType.DDA);
+		scanLine = new ScanLiner<>();
+		filler = new SeedFill4<>();
 		polygonRasterizer = new PolygonRasterizerImpl<>();
 		circleRasterizer = new CircleSegmentRasterizer<>();
 		selectedTool = Tool.LINE;
@@ -87,22 +110,36 @@ public class Canvas {
 		panel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(final MouseEvent e) {
-				selectedPoints.add(PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
-				if (selectedTool == Tool.LINE) {
-					if (selectedPoints.size() == 1) {
-						selectedPoints.add(PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
-					} else {
-						selectedPoints.set(1, PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
-					}
-					draw();
-					present();
-				}
-				if (selectedTool == Tool.CIRCLE && selectedPoints.size() == 1) {
+				if (e.getButton() == MouseEvent.BUTTON3) {
+					img.getPixel(e.getX(), e.getY()).ifPresent(
+							(final @NotNull Integer areaValue) -> {
+								if (selectedFiller == FillerType.SCANLINE) {
+									img = scanLine.fill(selectedPoints, img, color.getRGB());
+								} else {
+									img = filler.fillPattern(img, e.getX(), e.getY(),
+											color.getRGB(), color.brighter().brighter().getRGB(),
+											pixel -> pixel.intValue() == areaValue.intValue(), pattern);
+								}
+								present();
+							});
+				} else {
 					selectedPoints.add(PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
-				}
-				if (selectedTool == Tool.POLYGON) {
-					draw();
-					present();
+					if (selectedTool == Tool.LINE) {
+						if (selectedPoints.size() == 1) {
+							selectedPoints.add(PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
+						} else {
+							selectedPoints.set(1, PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
+						}
+						draw();
+						present();
+					}
+					if (selectedTool == Tool.CIRCLE && selectedPoints.size() == 1) {
+						selectedPoints.add(PointConverter.convertToNDC(new Point(e.getX(), e.getY()), width, height));
+					}
+					if (selectedTool == Tool.POLYGON) {
+						draw();
+						present();
+					}
 				}
 			}
 
@@ -139,8 +176,8 @@ public class Canvas {
 				}
 			}
 		});
-
-
+		pattern = new SolidPattern();
+		selectedFiller = FillerType.SCANLINE;
 		frame.add(createSidebar(), BorderLayout.EAST);
 		frame.add(panel, BorderLayout.CENTER);
 
@@ -230,14 +267,35 @@ public class Canvas {
 		}
 
 
-		JComboBox<LineRasterizerType> comboBox = new JComboBox<>(LineRasterizerType.values());
-		comboBox.setSelectedItem(LineRasterizerType.DDA);
-		comboBox.addActionListener(e -> liner = linerInstantiator.getLineRasterizer((LineRasterizerType) comboBox.getSelectedItem()));
-		comboBox.setBackground(GuiColor.MIDNIGHT_BLUE);
-		comboBox.setForeground(GuiColor.NEPHRITIS);
-		comboBox.setFocusable(false);
-		((JLabel) comboBox.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
-		comboBox.setToolTipText("Pick your line algorithm");
+		JComboBox<LineRasterizerType> comboBoxLiner = new JComboBox<>(LineRasterizerType.values());
+		comboBoxLiner.setSelectedItem(LineRasterizerType.DDA);
+		comboBoxLiner.addActionListener(e -> liner = linerFactory.getLineRasterizer((LineRasterizerType) comboBoxLiner.getSelectedItem()));
+		comboBoxLiner.setBackground(GuiColor.MIDNIGHT_BLUE);
+		comboBoxLiner.setForeground(GuiColor.NEPHRITIS);
+		comboBoxLiner.setFocusable(false);
+		((JLabel) comboBoxLiner.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
+		comboBoxLiner.setToolTipText("Pick your line algorithm");
+
+		JComboBox<PatternType> comboBoxPattern = new JComboBox<>(PatternType.values());
+		comboBoxPattern.setSelectedItem(PatternType.SOLID);
+		comboBoxPattern.addActionListener(e -> pattern = patternFactory.getPattern((PatternType) comboBoxPattern.getSelectedItem()));
+		comboBoxPattern.setBackground(GuiColor.MIDNIGHT_BLUE);
+		comboBoxPattern.setForeground(GuiColor.NEPHRITIS);
+		comboBoxPattern.setFocusable(false);
+		((JLabel) comboBoxPattern.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
+		comboBoxPattern.setToolTipText("Pick your pattern");
+
+		JComboBox<FillerType> comboBoxFiller = new JComboBox<>(FillerType.values());
+		comboBoxFiller.setSelectedItem(FillerType.SCANLINE);
+		comboBoxFiller.addActionListener(e -> {
+			filler = fillerFactory.getFiller((FillerType) comboBoxFiller.getSelectedItem());
+			selectedFiller = (FillerType) comboBoxFiller.getSelectedItem();
+		});
+		comboBoxFiller.setBackground(GuiColor.MIDNIGHT_BLUE);
+		comboBoxFiller.setForeground(GuiColor.NEPHRITIS);
+		comboBoxFiller.setFocusable(false);
+		((JLabel) comboBoxFiller.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
+		comboBoxFiller.setToolTipText("Pick your fill algorithm");
 
 		buttons.forEach(btn -> {
 			sidebar.add(btn);
@@ -245,7 +303,9 @@ public class Canvas {
 				btn.toggle();
 			}
 		});
-		sidebar.add(comboBox);
+		sidebar.add(comboBoxLiner);
+		sidebar.add(comboBoxPattern);
+		sidebar.add(comboBoxFiller);
 
 		return sidebar;
 	}

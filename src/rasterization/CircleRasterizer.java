@@ -1,6 +1,7 @@
 package rasterization;
 
 import annotations.NotNull;
+import geometry.Point;
 import rasterdata.RasterImage;
 
 /**

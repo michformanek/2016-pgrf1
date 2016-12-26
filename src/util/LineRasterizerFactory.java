@@ -1,9 +1,11 @@
-package rasterization;
+package util;
+
+import rasterization.*;
 
 /**
  * Created by Michal Formanek on 18.11.16.
  */
-public class LineRasterizerInstantiator<PixelType> {
+public class LineRasterizerFactory<PixelType> {
 
 	/**
 	 * Returns new instance of LineRasterizer specified by given type.

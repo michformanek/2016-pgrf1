@@ -2,6 +2,7 @@ package rasterization;
 
 import annotations.NotNull;
 import annotations.Nullable;
+import geometry.Point;
 import rasterdata.RasterImage;
 import util.PointConverter;
 

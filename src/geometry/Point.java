@@ -1,4 +1,4 @@
-package rasterization;
+package geometry;
 
 /**
  * Created by Michal Formanek on 17.11.16.

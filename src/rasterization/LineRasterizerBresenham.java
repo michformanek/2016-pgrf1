@@ -12,14 +12,13 @@ public class LineRasterizerBresenham<PixelType> implements LineRasterizer<PixelT
 	@Override
 	@NotNull
 	public RasterImage<PixelType> drawLine(@NotNull final RasterImage<PixelType> img, final double x1, final double y1, final double x2, final double y2, @NotNull PixelType pixel) {
-		RasterImage<PixelType> result = img;
 		final int c1 = (int) ((img.getWidth() - 1) * 0.5 * (x1 + 1));
 		final int r1 = (int) ((img.getHeight() - 1) * 0.5 * (1 - y1));
 		final int c2 = (int) ((img.getWidth() - 1) * 0.5 * (x2 + 1));
 		final int r2 = (int) ((img.getHeight() - 1) * 0.5 * (1 - y2));
 		int x = c1, y = r1;
 		if ((c1 == c2) && (r1 == r2)) {
-			result.withPixel(r1, c1, pixel);
+			img.withPixel(r1, c1, pixel);
 		} else {
 			int dx = Math.abs(c2 - c1);
 			int dy = Math.abs(r2 - r1);
@@ -46,9 +45,9 @@ public class LineRasterizerBresenham<PixelType> implements LineRasterizer<PixelT
 					diff = diff + dx;
 					y = y + pomY;
 				}
-				result.withPixel(x, y, pixel);
+				img.withPixel(x, y, pixel);
 			}
 		}
-		return result;
+		return img;
 	}
 }
